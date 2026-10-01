@@ -262,13 +262,23 @@ with tab4:
     st.subheader("🧠 模型特徵重要性與合規可解釋性 (XAI)")
     st.warning("⚠️ **合規警語**：本資料集特徵 V1 至 V28 均經過主成分分析（PCA）降維去識別化，請勿將特定 V 欄位直接詮釋為「持卡人年齡」、「消費類別」或真實刷卡行為，應以數學空間維度或統計貢獻度呈現。")
 
-    importance_data = {
-        '核心 PCA 特徵': ['V14 (潛在風險維度1)', 'V17 (潛在異常維度2)', 'V12 (交易分佈維度)', 'V10 (時序關聯維度)', 'Amount (交易金額)', 'V11 (頻率維度)'],
-        'SHAP 平均貢獻權重': [0.28, 0.23, 0.18, 0.14, 0.10, 0.07]
-    }
-    
-    fig, ax = plt.subplots(figsize=(7, 3.5))
-    ax.barh(importance_data['核心 PCA 特徵'], importance_data['SHAP 平均貢獻權重'], color='#1d4ed8')
-    ax.set_xlabel("SHAP 絕對特徵重要性 (|SHAP Value|)")
-    ax.invert_yaxis()
-    st.pyplot(fig)
+    importance_df = pd.DataFrame({
+        '特徵名稱': [
+            'V14 (潛在風險維度 1)',
+            'V17 (潛在異常維度 2)',
+            'V12 (交易分佈維度)',
+            'V10 (時序關聯維度)',
+            'Amount (交易金額)',
+            'V11 (頻率維度)',
+        ],
+        'SHAP 絕對重要性 (|SHAP Value|)': [
+            0.28,
+            0.23,
+            0.18,
+            0.14,
+            0.10,
+            0.07,
+        ],
+    }).set_index('特徵名稱')
+
+    st.bar_chart(importance_df, horizontal=True, color='#1d4ed8')
