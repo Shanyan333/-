@@ -2,57 +2,6 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import confusion_matrix, precision_recall_curve, roc_curve, auc
-
-st.set_page_config(
-    page_title="金融風控 - 信用卡交易詐欺即時評分系統",
-    page_icon="🛡️",
-    layout="wide"
-)
-
-# 支援中文字體顯示
-plt.rcParams['font.sans-serif'] = ['DejaVu Sans', 'Arial', 'sans-serif']
-plt.rcParams['axes.unicode_minus'] = False
-
-st.title("🛡️ 結合機器學習與可解釋性 AI 之信用卡交易詐欺即時風險評分系統")
-st.caption("逢甲大學財金專題實證原型 — 近即時金融風控與異常偵測回放系統")
-
-# 1. 載入資料
-@st.cache_data
-def load_data():
-    try:
-        df1 = pd.read_csv("creditcard_part1.csv")
-        df2 = pd.read_csv("creditcard_part2.csv")
-        df = pd.concat([df1, df2], ignore_index=True)
-        return df
-    except Exception as e:
-        st.error(f"資料載入失敗: {e}")
-        return None
-
-with st.spinner("載入交易數據與模型引擎中..."):
-    df = load_data()
-
-if df is not None:
-    # 側邊欄設定
-    st.sidebar.header("⚙️ 即時風控引擎設定")
-    threshold = st.sidebar.slider("詐欺判定決策門檻 (Threshold)", min_value=0.05, max_value=0.95, value=0.40, step=0.01)
-    
-    st.sidebar.subheader("💰 風控成本情境參數")
-    cost_fn = st.sidebar.number_input("偽陰性 (FN, 漏報盜刷) 成本", value=10, min_value=1, step=1)
-    cost_fp = st.sidebar.number_input("偽陽性 (FP, 誤擋好人) 成本", value=1, min_value=1, step=1)
-
-    # 儀表板關鍵指標 (KPI)
-    total_tx = len(df)
-    fraud_tx = int(df['Class'].sum()) if 'Class' in df.columns else 0
-    fraud_rate = (fraud_tx / total_tx * 100) if total_tx > 0 else 0
-
-    col1, col2, col3, col4 = st.columns(4)
-    col1.metric("總監控交易筆數", f"{total_tximport streamlit as st
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import confusion_matrix
 
@@ -62,7 +11,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# 支援中文字體顯示
+# 支援字體顯示
 plt.rcParams['font.sans-serif'] = ['DejaVu Sans', 'Arial', 'sans-serif']
 plt.rcParams['axes.unicode_minus'] = False
 
@@ -76,7 +25,6 @@ def load_data():
         df1 = pd.read_csv("creditcard_part1.csv")
         df2 = pd.read_csv("creditcard_part2.csv")
         df = pd.concat([df1, df2], ignore_index=True)
-        # 清除 Class 缺失值
         if 'Class' in df.columns:
             df = df.dropna(subset=['Class'])
             df['Class'] = df['Class'].astype(int)
@@ -147,7 +95,7 @@ if df is not None:
     with tab2:
         st.subheader("📈 決策門檻與風控成本權衡")
         
-        # 分層採樣確保正常與詐欺都有取到，避免單一類別報錯
+        # 分層採樣確保正常與詐欺皆有取樣
         if 'Class' in df.columns and fraud_tx > 0:
             df_normal = df[df['Class'] == 0].sample(n=min(3000, len(df[df['Class'] == 0])), random_state=42)
             df_fraud = df[df['Class'] == 1].sample(n=min(200, fraud_tx), random_state=42)
@@ -164,7 +112,6 @@ if df is not None:
             y_true = eval_sample['Class'].astype(int).values
             y_pred = eval_sample['pred_class'].astype(int).values
 
-            # 強制指定 labels=[0, 1]，即使某個類別數量為 0 也不會崩潰
             cm = confusion_matrix(y_true, y_pred, labels=[0, 1])
             tn, fp, fn, tp = cm.ravel()
             total_cost = int((fn * cost_fn) + (fp * cost_fp))
